@@ -1,0 +1,13 @@
+.Home {
+
+  .Content {
+    background: rgb(236, 236, 236);
+    padding: 0 50px;
+
+    &__inner {
+      background: white;
+      padding: 24px;
+      min-height: 280px;
+    }
+  }
+}
