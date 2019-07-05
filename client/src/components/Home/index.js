@@ -15,10 +15,8 @@ const Home = () => {
       <PageHeader />
 
       <Content className="Content">
-        <Card bordered={false}>
-        <div className="Content__inner" >
+        <Card title="Currency dashboard" bordered={false}>
           <FinanceCharts />
-        </div>
         </Card>
       </Content>
     </Layout>
