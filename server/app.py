@@ -1,7 +1,9 @@
 import requests
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, make_response, jsonify, send_from_directory
+from flask_cors import CORS
 
 app = Flask(__name__)
+cors = CORS(app)
 import pandas as pd
 import quandl
 import math
@@ -12,6 +14,9 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing, svm
 from sklearn.linear_model import LinearRegression
+
+from alpha_vantage.timeseries import TimeSeries
+ts = TimeSeries(key='OLU80OMWE8R781Q6')
 
 # if 'ON_HEROKU' in os.environ:
 @app.route('/')
@@ -61,25 +66,36 @@ def index_favicon96():
 
 @app.route('/getstockdata/')
 def getStockData():
+    print('Sending request')
     stock = request.args.get('stock', default=None, type=None)
-    quandl.ApiConfig.api_key = "qWcicxSctVxrP9PhyneG"
-    allData = quandl.get('WIKI/' + stock)
+    data, meta_data = ts.get_intraday(symbol=stock, interval='30min', outputsize='full')
+
     dataLength = 251
-    allDataLength = len(allData)
+    allDataLength = len(data)
     firstDataElem = math.floor(random.random() * (allDataLength - dataLength))
-    mlData = allData[0:firstDataElem + dataLength]
+
+    mlData = [[] for _ in data.items()]
+    index = 0
+    for attr, val in data.items():
+        mlData[index].append(attr)
+        for item in val.items():
+            mlData[index].append(float(item[1]))
+        index += 1
+
+    mlData = pd.DataFrame(mlData, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
 
     def FormatForModel(dataArray):
-        dataArray = dataArray[['Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume']]
-        dataArray['HL_PCT'] = (dataArray['Adj. High'] - dataArray['Adj. Close']) / dataArray['Adj. Close'] * 100.0
-        dataArray['PCT_change'] = (dataArray['Adj. Close'] - dataArray['Adj. Open']) / dataArray['Adj. Open'] * 100.0
-        dataArray = dataArray[['Adj. Close', 'HL_PCT', 'PCT_change', 'Adj. Volume']]
+        print(dataArray['high'])
+        dataArray['HL_PCT'] = (dataArray['high'] - dataArray['close']) / dataArray['close'] * 100.0
+        print(dataArray['HL_PCT'])
+        dataArray['PCT_change'] = (dataArray['close'] - dataArray['open']) / dataArray['open'] * 100.0
+        dataArray = dataArray[['close', 'HL_PCT', 'PCT_change', 'volume']]
         dataArray.fillna(-99999, inplace=True)
         return dataArray
 
     mlData = FormatForModel(mlData)
 
-    forecast_col = 'Adj. Close'
+    forecast_col = 'close'
     forecast_out = int(math.ceil(0.12 * dataLength))
 
     mlData['label'] = mlData[forecast_col].shift(-forecast_out)
@@ -100,8 +116,12 @@ def getStockData():
     accuracy = clf.score(X_test, y_test)
 
     prediction = clf.predict(X_data)
-    data = data[['Adj. Close']]
-    data = data.rename(columns={'Adj. Close': 'EOD'})
+    data = data[['close']]
+    data = data.rename(columns={'close': 'EOD'})
     data['prediction'] = prediction[:]
     data = data.to_json(orient='table')
-    return jsonify(data)
+
+    response = make_response(data)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+

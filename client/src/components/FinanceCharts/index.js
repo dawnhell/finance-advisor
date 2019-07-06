@@ -15,12 +15,7 @@ const STOCKS = [
   { name: 'Intel', value: 'INTC' },
   { name: 'Cisco Systems', value: 'CSCO' },
   { name: 'Oracle', value: 'ORCL' },
-  { name: 'Facebook', value: 'FB' },
-  { name: 'HP', value: 'HPQ' },
-  { name: 'Walmart', value: 'WMT' },
-  { name: 'Tesla', value: 'TSLA' },
-  { name: 'Amazon', value: 'AMZN' },
-  { name: 'Twitter', value: 'TWTR' }
+  { name: 'Facebook', value: 'FB' }
 ];
 
 
@@ -58,7 +53,7 @@ const FinanceCharts = () => {
           <TabPane tab={stock.name} key={stock.name} className="Tab-Pane">
             {stocksCurrencyData[stock.name] ? (
               <AreaChart width={900} height={400} data={stocksCurrencyData[stock.name]}>
-                <Area type="monotone" dataKey="prediction" stroke="#CA6B74" />
+                <Area type="monotone" dataKey="prediction" fill="#ca4346" stroke="#ca9346"  />
                 <Area type="monotone" dataKey="uv" stroke="#8884D8" />
 
                 <CartesianGrid stroke="#ccc" />
