@@ -628,6 +628,7 @@ class App extends Component {
         </div>
       );
     }
+    console.log(this.state)
     return (
       <div>
         <div id="container" className="landing">

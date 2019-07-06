@@ -1,54 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { Tabs } from 'antd';
-import { fetchCurrencyData } from '../../services/api.service';
+import { AreaChart, Area, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Tabs, Spin } from 'antd';
+import { fetchStockData } from '../../services/api.service';
 
-const simpleData = [
-  {name: 'Page A', uv: 400, pv: 2400, amt: 2400},
-  {name: 'Page AAA', uv: 490, pv: 3400, amt: 1400},
-  {name: 'Page B', uv: 340, pv: 1400, amt: 2800},
-  {name: 'Page C', uv: 200, pv: 2800, amt: 2100}
-];
+import './styles.scss';
 
 const { TabPane } = Tabs;
 
+const STOCKS = [
+  { name: 'Apple Inc.', value: 'AAPL' },
+  { name: 'Microsoft', value: 'MSFT' },
+  { name: 'Alphabet', value: 'GOOGL' },
+  { name: 'IBM', value: 'IBM' },
+  { name: 'Intel', value: 'INTC' },
+  { name: 'Cisco Systems', value: 'CSCO' },
+  { name: 'Oracle', value: 'ORCL' },
+  { name: 'Facebook', value: 'FB' },
+  { name: 'HP', value: 'HPQ' },
+  { name: 'Walmart', value: 'WMT' },
+  { name: 'Tesla', value: 'TSLA' },
+  { name: 'Amazon', value: 'AMZN' },
+  { name: 'Twitter', value: 'TWTR' }
+];
+
+
 const FinanceCharts = () => {
-  const [currencyData, setCurrencyData] = useState([]);
+  const [stocksCurrencyData, setStocksCurrencyData] = useState({});
 
   useEffect(() => {
-    if (!currencyData.length) {
-      fetchCurrencyData()
+    if (!stocksCurrencyData[STOCKS[0].name]) {
+      fetchStockData(STOCKS[0].value)
         .then(res => res.json())
         .then((res) => {
-          console.log(res);
-          res = res.map(item => ({ name: item.name, uv: item.data_symbols_count }));
-          setCurrencyData(res)
+          !stocksCurrencyData[STOCKS[0].name] && setStocksCurrencyData({
+            ...stocksCurrencyData,
+            [STOCKS[0].name]: res.data.map(item => ({ name: item.Date, uv: item.EOD, prediction: item.prediction }))
+          });
         })
     }
   });
 
+  const getStock = (stock) => {
+    fetchStockData(stock.value)
+      .then(res => res.json())
+      .then((res) => {
+        setStocksCurrencyData({
+          ...stocksCurrencyData,
+          [stock.name]: res.data.map(item => ({ name: item.Date, uv: item.EOD, prediction: item.prediction }))
+        });
+      })
+  };
+
   return (
     <div className="Finance-Charts">
-      <Tabs defaultActiveKey="1" onChange={(e) => console.log(e)}>
-        <TabPane tab="Tab 1" key="1">
-          <LineChart width={400} height={400} data={simpleData}>
-            <Line type="monotone" dataKey="uv" stroke="#8884d8" />
-            <CartesianGrid stroke="#ccc" />
-            <XAxis dataKey="name" />
-            <YAxis />
-          </LineChart>
-        </TabPane>
+      <Tabs defaultActiveKey={STOCKS[0].name} onChange={(e) => getStock(STOCKS.filter(stock => stock.name === e)[0])}>
+        {STOCKS.map(stock => (
+          <TabPane tab={stock.name} key={stock.name} className="Tab-Pane">
+            {stocksCurrencyData[stock.name] ? (
+              <AreaChart width={900} height={400} data={stocksCurrencyData[stock.name]}>
+                <Area type="monotone" dataKey="prediction" stroke="#CA6B74" />
+                <Area type="monotone" dataKey="uv" stroke="#8884D8" />
 
-        <TabPane tab="Tab 2" key="2">
-          {currencyData.length && (
-            <LineChart width={900} height={400} data={currencyData}>
-              <Line type="monotone" dataKey="uv" stroke="#8884d8" />
-              <CartesianGrid stroke="#ccc" />
-              <XAxis dataKey="name" />
-              <YAxis />
-            </LineChart>
-          )}
-        </TabPane>
+                <CartesianGrid stroke="#ccc" />
+                <XAxis dataKey="name" />
+                <YAxis />
+              </AreaChart>
+            ) : (
+              <Spin className="Spinner" size="large" />
+            )}
+          </TabPane>
+        ))}
       </Tabs>
     </div>
   );
