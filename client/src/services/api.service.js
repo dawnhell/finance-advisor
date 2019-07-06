@@ -8,3 +8,14 @@ export function fetchStockData(stock) {
     }
   });
 }
+
+export function fetchTeslaStockData() {
+  return fetch(`http://localhost:5000/tesla_stocks`, {
+    method: 'GET',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    }
+  });
+}

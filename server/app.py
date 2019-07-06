@@ -9,11 +9,15 @@ import quandl
 import math
 import random
 import os
+import json
 import numpy as np
 # from sklearn.model_selection import cross_validate
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing, svm
 from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 
 from alpha_vantage.timeseries import TimeSeries
 ts = TimeSeries(key='OLU80OMWE8R781Q6')
@@ -120,6 +124,65 @@ def getStockData():
     data = data.to_json(orient='table')
 
     response = make_response(data)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+@app.route('/tesla_stocks')
+def getTeslaStocks():
+    df = pd.read_csv("data/Tesla_10_years.csv")
+
+    rows = df.values.tolist()
+    rows.reverse()
+
+    x_train = []
+    y_train = []
+    x_test = []
+    y_test = []
+    X = []
+    Y = []
+    for row in rows:
+        X.append(int(''.join(row[0].split('/'))))
+        Y.append(row[3])
+    x_train, x_test, y_train, y_test = train_test_split(X, Y, train_size=0.8,test_size=0.2)
+
+    real_date = [_ for _ in x_test]
+
+    # Convert lists into numpy arrays
+    x_train = np.array(x_train)
+    y_train = np.array(y_train)
+    x_test = np.array(x_test)
+    y_test = np.array(y_test)
+
+    # reshape the values as we have only one input feature
+    x_train = x_train.reshape(-1, 1)
+    x_test = x_test.reshape(-1, 1)
+
+    # SVM
+    clf_svr = SVR(kernel='rbf', C=1e3, gamma=0.1)
+    clf_svr.fit(x_train, y_train)
+    y_pred_svr = clf_svr.predict(x_test)
+
+    # Random forest regressor
+    clf_rf = RandomForestRegressor(n_estimators=100)
+    clf_rf.fit(x_train, y_train)
+    y_pred_rf = clf_rf.predict(x_test)
+
+    # Gradient boosting
+    clf_gb = GradientBoostingRegressor(n_estimators=200)
+    clf_gb.fit(x_train, y_train)
+    y_pred_gb = clf_gb.predict(x_test)
+
+    response = json.dumps({
+        'real_date': real_date,
+        'real_data': [_ for _ in y_test],
+        'svm': [_ for _ in y_pred_svr],
+        'rf': [_ for _ in y_pred_rf],
+        'gb': [_ for _ in y_pred_gb]
+    })
+
+
+
+    response = make_response(response)
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
