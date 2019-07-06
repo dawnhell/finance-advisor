@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { AreaChart, Area, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Tabs, Spin } from 'antd';
 import { fetchStockData } from '../../services/api.service';
 
@@ -10,7 +10,7 @@ const { TabPane } = Tabs;
 const STOCKS = [
   { name: 'Apple Inc.', value: 'AAPL' },
   { name: 'Microsoft', value: 'MSFT' },
-  { name: 'Alphabet', value: 'GOOGL' },
+  { name: 'Google', value: 'GOOGL' },
   { name: 'IBM', value: 'IBM' },
   { name: 'Intel', value: 'INTC' },
   { name: 'Cisco Systems', value: 'CSCO' },
@@ -29,7 +29,7 @@ const FinanceCharts = () => {
         .then((res) => {
           !stocksCurrencyData[STOCKS[0].name] && setStocksCurrencyData({
             ...stocksCurrencyData,
-            [STOCKS[0].name]: res.data.map(item => ({ name: item.Date, uv: item.EOD, prediction: item.prediction }))
+            [STOCKS[0].name]: res.data.reverse().map(item => ({ name: item.name, realValue: item.EOD, prediction: item.prediction, accuracy: item.accuracy }))
           });
         })
     }
@@ -41,7 +41,7 @@ const FinanceCharts = () => {
       .then((res) => {
         setStocksCurrencyData({
           ...stocksCurrencyData,
-          [stock.name]: res.data.map(item => ({ name: item.Date, uv: item.EOD, prediction: item.prediction }))
+          [stock.name]: res.data.reverse().map(item => ({ name: item.name, realValue: item.EOD, prediction: item.prediction, accuracy: item.accuracy }))
         });
       })
   };
@@ -52,14 +52,24 @@ const FinanceCharts = () => {
         {STOCKS.map(stock => (
           <TabPane tab={stock.name} key={stock.name} className="Tab-Pane">
             {stocksCurrencyData[stock.name] ? (
-              <AreaChart width={900} height={400} data={stocksCurrencyData[stock.name]}>
-                <Area type="monotone" dataKey="prediction" fill="#ca4346" stroke="#ca9346"  />
-                <Area type="monotone" dataKey="uv" stroke="#8884D8" />
+              <ResponsiveContainer>
+                <AreaChart data={stocksCurrencyData[stock.name]}>
+                  <Area type="monotone" dataKey="prediction" fill="#ca4346" stroke="#ca9346"  />
+                  <Area type="monotone" dataKey="realValue" stroke="#8884D8" />
 
-                <CartesianGrid stroke="#ccc" />
-                <XAxis dataKey="name" />
-                <YAxis />
-              </AreaChart>
+                  <CartesianGrid stroke="#D6D6D6" strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis
+                    domain={[
+                      Math.round(Math.min(...stocksCurrencyData[stock.name].map(_ => _.realValue)) - 10),
+                      Math.round(Math.max(...stocksCurrencyData[stock.name].map(_ => _.realValue)) + 10)
+                    ]}
+                  />
+
+                  <Tooltip />
+                  <Legend verticalAlign="top" height={36}/>
+                </AreaChart>
+              </ResponsiveContainer>
             ) : (
               <Spin className="Spinner" size="large" />
             )}

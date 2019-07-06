@@ -63,16 +63,13 @@ def index_favicon32():
 def index_favicon96():
     return send_from_directory('client/build', 'favicon-96x96.png')
 
-
 @app.route('/getstockdata/')
 def getStockData():
     print('Sending request')
     stock = request.args.get('stock', default=None, type=None)
     data, meta_data = ts.get_intraday(symbol=stock, interval='30min', outputsize='full')
 
-    dataLength = 251
-    allDataLength = len(data)
-    firstDataElem = math.floor(random.random() * (allDataLength - dataLength))
+    allDataLength = 250
 
     mlData = [[] for _ in data.items()]
     index = 0
@@ -82,12 +79,11 @@ def getStockData():
             mlData[index].append(float(item[1]))
         index += 1
 
+    savedDates = [item[0] for item in mlData]
     mlData = pd.DataFrame(mlData, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
 
     def FormatForModel(dataArray):
-        print(dataArray['high'])
         dataArray['HL_PCT'] = (dataArray['high'] - dataArray['close']) / dataArray['close'] * 100.0
-        print(dataArray['HL_PCT'])
         dataArray['PCT_change'] = (dataArray['close'] - dataArray['open']) / dataArray['open'] * 100.0
         dataArray = dataArray[['close', 'HL_PCT', 'PCT_change', 'volume']]
         dataArray.fillna(-99999, inplace=True)
@@ -96,20 +92,20 @@ def getStockData():
     mlData = FormatForModel(mlData)
 
     forecast_col = 'close'
-    forecast_out = int(math.ceil(0.12 * dataLength))
+    forecast_out = int(math.ceil(0.12 * allDataLength))
 
     mlData['label'] = mlData[forecast_col].shift(-forecast_out)
     mlData.dropna(inplace=True)
 
     X = np.array(mlData.drop(['label'], 1))
     X = preprocessing.scale(X)
-    X_data = X[-dataLength:]
-    X = X[:-dataLength]
-    data = mlData[-dataLength:]
-    mlData = mlData[:-dataLength]
+    X_data = X[-allDataLength:]
+    X = X[:-allDataLength]
+    data = mlData[-allDataLength:]
+    mlData = mlData[:-allDataLength]
     y = np.array(mlData['label'])
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.7)
 
     clf = LinearRegression()
     clf.fit(X_train, y_train)
@@ -119,6 +115,8 @@ def getStockData():
     data = data[['close']]
     data = data.rename(columns={'close': 'EOD'})
     data['prediction'] = prediction[:]
+    data['name'] = pd.Series(savedDates)
+    data['accuracy'] = pd.Series(accuracy)
     data = data.to_json(orient='table')
 
     response = make_response(data)
