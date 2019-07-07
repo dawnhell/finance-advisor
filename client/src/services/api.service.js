@@ -19,3 +19,14 @@ export function fetchTeslaStockData() {
     }
   });
 }
+
+export function fetchPredictedData(data) {
+  return fetch(`http://localhost:5000/predict_next?data=${JSON.stringify(data)}`, {
+    method: 'GET',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    }
+  });
+}

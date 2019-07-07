@@ -18,6 +18,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.preprocessing import scale
 
 from alpha_vantage.timeseries import TimeSeries
 ts = TimeSeries(key='OLU80OMWE8R781Q6')
@@ -127,23 +128,19 @@ def getStockData():
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
+
+clf_lr = LinearRegression()
+clf_rf = RandomForestRegressor(n_estimators=100)
+clf_gb = GradientBoostingRegressor(n_estimators=1000)
+
 @app.route('/tesla_stocks')
 def getTeslaStocks():
-    df = pd.read_csv("data/Tesla_10_years.csv")
-
-    # rows = df.values.tolist()
-    # rows.reverse()
+    df = pd.read_csv("data/TSLA.csv")
 
     x_train = []
     y_train = []
     x_test = []
     y_test = []
-    # X = []
-    # Y = []
-    # for row in rows:
-    #     X.append([int(''.join(row[0].split('/'))), int(row[2]), int(row[3])])
-    #     Y.append(row[1])
-    # rows = rows[[]]
 
     h = [0]
     for i in range(1, len(df)):
@@ -151,10 +148,14 @@ def getTeslaStocks():
     df['prev_close'] = h
     df = df.drop(df.index[0])
 
-    X = df[['date', 'open', 'high', 'low','prev_close']]
-    Y = df[['open']]
+    X = df[['date', 'open', 'high', 'low','prev_close', 'volume']]
+    # X = X[::-1]
+    Y = df[['close']]
 
-    x_train, x_test, y_train, y_test = train_test_split(X, Y, train_size=0.8, test_size=0.2)
+    for col in [['date', 'open', 'high', 'low', 'prev_close', 'volume']]:
+        X[col] = scale(X[col])
+
+    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=31, shuffle=False)
 
     real_date = [_ for _ in x_test['date']]
 
@@ -165,17 +166,14 @@ def getTeslaStocks():
     y_test = np.array(y_test)
 
     # Linear regression
-    clf_lr = LinearRegression()
     clf_lr.fit(x_train, y_train)
     y_pred_lr = clf_lr.predict(x_test)
 
     # Random forest regressor
-    clf_rf = RandomForestRegressor(n_estimators=100)
     clf_rf.fit(x_train, y_train)
     y_pred_rf = clf_rf.predict(x_test)
 
     # Gradient boosting
-    clf_gb = GradientBoostingRegressor(n_estimators=200)
     clf_gb.fit(x_train, y_train)
     y_pred_gb = clf_gb.predict(x_test)
 
@@ -184,8 +182,34 @@ def getTeslaStocks():
         'real_data': [_[0] for _ in y_test],
         'lr': [_[0] for _ in y_pred_lr],
         'rf': [_ for _ in y_pred_rf],
-        'gb': [_ for _ in y_pred_gb]
+        'gb': [_ for _ in y_pred_gb],
+        'gb_accuracy': clf_gb.score(x_test,y_test)
     })
+
+    response = make_response(response)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+
+@app.route('/predict_next')
+def predictNextPrice():
+    newData = request.args.get('data', default=None, type=None)
+    newData = json.loads(newData)
+
+    dataToPredict = [float(newData['open']), float(newData['high']), float(newData['low']), float(newData['close']), float(newData['close']), float(newData['volume'])]
+
+    print(dataToPredict)
+    dataToPredict = scale(dataToPredict)
+    print(dataToPredict)
+
+    predictedValue = clf_gb.predict([dataToPredict])
+
+    with open('data/TSLA.csv', 'a') as fd:
+        data_to_write = '\n' + ''.join(newData['date'].split('-'))[:8] + ',' + newData['open'] + ',' + newData['high'] + ',' + newData['low'] + ',' + newData['close'] + ',' + newData['close'] + ',' + newData['volume']
+        # fd.write(data_to_write)
+
+    print(predictedValue)
+    response = json.dumps([_ for _ in predictedValue])
 
     response = make_response(response)
     response.headers['Access-Control-Allow-Origin'] = '*'
