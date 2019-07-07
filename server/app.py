@@ -143,9 +143,15 @@ def getTeslaStocks():
     # for row in rows:
     #     X.append([int(''.join(row[0].split('/'))), int(row[2]), int(row[3])])
     #     Y.append(row[1])
-
     # rows = rows[[]]
-    X = df[['date', 'open', 'high', 'low']]
+
+    h = [0]
+    for i in range(1, len(df)):
+        h.append(df.iloc[i - 1]['close'])
+    df['prev_close'] = h
+    df = df.drop(df.index[0])
+
+    X = df[['date', 'open', 'high', 'low','prev_close']]
     Y = df[['open']]
 
     x_train, x_test, y_train, y_test = train_test_split(X, Y, train_size=0.8, test_size=0.2)
