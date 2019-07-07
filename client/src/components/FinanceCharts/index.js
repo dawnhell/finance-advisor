@@ -3213,12 +3213,12 @@ const FinanceCharts = () => {
         <Card className="Prediction-Card">
           <Row gutter={16}>
             <Col span={8}>
-              <Statistic title="Percent of true predictions" value={`55.4041839475%`} />
+              <Statistic title="Percent of true predictions" value={`${predictionPercentage.filter(_ => _.predictedRight === 'true').length / predictionPercentage.length * 100}%`} />
             </Col>
 
             {console.log(predictionPercentage)}
             <Col span={8}>
-              <Statistic title="Percent of random predictions" value={`${45 + Math.random() * 10}%`} />
+              <Statistic title="Percent of random predictions" value={`${predictionPercentage.filter(_ => _.predictedRandomly === 'true').length / predictionPercentage.length * 100}%`} />
             </Col>
 
             <Col span={8}>

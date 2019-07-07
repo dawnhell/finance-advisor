@@ -152,12 +152,16 @@ def getTeslaStocks():
     # X = X[::-1]
     Y = df[['close']]
 
-    for col in [['date', 'open', 'high', 'low', 'prev_close', 'volume']]:
-        X[col] = scale(X[col])
+    # for col in [['date', 'open', 'high', 'low', 'prev_close', 'volume']]:
+    #     X[col] = scale(X[col])
 
-    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=55, shuffle=False)
+    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=35, shuffle=False)
 
     real_date = [_ for _ in x_test['date']]
+
+    for col in [['date', 'open', 'high', 'low', 'prev_close', 'volume']]:
+        x_train[col] = scale(x_train[col])
+        x_test[col] = scale(x_test[col])
 
     # Convert lists into numpy arrays
     x_train = np.array(x_train)
