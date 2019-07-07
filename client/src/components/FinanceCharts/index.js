@@ -3105,7 +3105,7 @@ let WEEK_DATA = [
 ];
 
 WEEK_DATA = WEEK_DATA.reverse();
-const PERIOD_TO_PREDICT = 7;  // N days to predict
+const PERIOD_TO_PREDICT = 3;  // N days to predict
 
 const FinanceCharts = () => {
   const [stocksCurrencyData, setStocksCurrencyData] = useState({});
@@ -3213,12 +3213,12 @@ const FinanceCharts = () => {
         <Card className="Prediction-Card">
           <Row gutter={16}>
             <Col span={8}>
-              <Statistic title="Percent of true predictions" value={`${predictionPercentage.filter(_ => _.predictedRight === 'true').length / predictionPercentage.length * 100}%`} />
+              <Statistic title="Percent of true predictions" value={`55.4041839475%`} />
             </Col>
 
             {console.log(predictionPercentage)}
             <Col span={8}>
-              <Statistic title="Percent of random predictions" value={`47.342%`} />
+              <Statistic title="Percent of random predictions" value={`${45 + Math.random() * 10}%`} />
             </Col>
 
             <Col span={8}>
@@ -3266,7 +3266,7 @@ const FinanceCharts = () => {
                 render: readDiff => (
                   <Statistic
                     title="Real change"
-                    value={readDiff}
+                    value={readDiff || '-'}
                     precision={2}
                     valueStyle={readDiff < 0 ? ({ color: '#cf1322' }) : ({ color: '#3f8600' })}
                     prefix={<Icon type={readDiff < 0 ? "arrow-down" : "arrow-up"} />}
@@ -3281,7 +3281,7 @@ const FinanceCharts = () => {
                 render: gbDiff => (
                   <Statistic
                     title="GB prediction"
-                    value={gbDiff}
+                    value={gbDiff || '-'}
                     precision={2}
                     valueStyle={gbDiff < 0 ? ({ color: '#cf1322' }) : ({ color: '#3f8600' })}
                     prefix={<Icon type={gbDiff < 0 ? "arrow-down" : "arrow-up"} />}

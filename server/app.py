@@ -155,7 +155,7 @@ def getTeslaStocks():
     for col in [['date', 'open', 'high', 'low', 'prev_close', 'volume']]:
         X[col] = scale(X[col])
 
-    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=31, shuffle=False)
+    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=55, shuffle=False)
 
     real_date = [_ for _ in x_test['date']]
 
@@ -198,9 +198,7 @@ def predictNextPrice():
 
     dataToPredict = [float(newData['open']), float(newData['high']), float(newData['low']), float(newData['close']), float(newData['close']), float(newData['volume'])]
 
-    print(dataToPredict)
     dataToPredict = scale(dataToPredict)
-    print(dataToPredict)
 
     predictedValue = clf_gb.predict([dataToPredict])
 
