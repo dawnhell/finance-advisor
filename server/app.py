@@ -131,21 +131,26 @@ def getStockData():
 def getTeslaStocks():
     df = pd.read_csv("data/Tesla_10_years.csv")
 
-    rows = df.values.tolist()
-    rows.reverse()
+    # rows = df.values.tolist()
+    # rows.reverse()
 
     x_train = []
     y_train = []
     x_test = []
     y_test = []
-    X = []
-    Y = []
-    for row in rows:
-        X.append(int(''.join(row[0].split('/'))))
-        Y.append(row[3])
-    x_train, x_test, y_train, y_test = train_test_split(X, Y, train_size=0.8,test_size=0.2)
+    # X = []
+    # Y = []
+    # for row in rows:
+    #     X.append([int(''.join(row[0].split('/'))), int(row[2]), int(row[3])])
+    #     Y.append(row[1])
 
-    real_date = [_ for _ in x_test]
+    # rows = rows[[]]
+    X = df[['date', 'open', 'high', 'low']]
+    Y = df[['open']]
+
+    x_train, x_test, y_train, y_test = train_test_split(X, Y, train_size=0.8, test_size=0.2)
+
+    real_date = [_ for _ in x_test['date']]
 
     # Convert lists into numpy arrays
     x_train = np.array(x_train)
@@ -153,14 +158,10 @@ def getTeslaStocks():
     x_test = np.array(x_test)
     y_test = np.array(y_test)
 
-    # reshape the values as we have only one input feature
-    x_train = x_train.reshape(-1, 1)
-    x_test = x_test.reshape(-1, 1)
-
-    # SVM
-    clf_svr = SVR(kernel='rbf', C=1e3, gamma=0.1)
-    clf_svr.fit(x_train, y_train)
-    y_pred_svr = clf_svr.predict(x_test)
+    # Linear regression
+    clf_lr = LinearRegression()
+    clf_lr.fit(x_train, y_train)
+    y_pred_lr = clf_lr.predict(x_test)
 
     # Random forest regressor
     clf_rf = RandomForestRegressor(n_estimators=100)
@@ -174,13 +175,11 @@ def getTeslaStocks():
 
     response = json.dumps({
         'real_date': real_date,
-        'real_data': [_ for _ in y_test],
-        'svm': [_ for _ in y_pred_svr],
+        'real_data': [_[0] for _ in y_test],
+        'lr': [_[0] for _ in y_pred_lr],
         'rf': [_ for _ in y_pred_rf],
         'gb': [_ for _ in y_pred_gb]
     })
-
-
 
     response = make_response(response)
     response.headers['Access-Control-Allow-Origin'] = '*'
