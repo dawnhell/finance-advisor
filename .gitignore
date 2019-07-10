@@ -1,3 +1,4 @@
 .idea/
 server/venv/
 server/__pycache__/app.cpython-36.pyc
+.env

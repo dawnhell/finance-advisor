@@ -23,7 +23,6 @@ from sklearn.preprocessing import scale
 from alpha_vantage.timeseries import TimeSeries
 ts = TimeSeries(key='OLU80OMWE8R781Q6')
 
-# if 'ON_HEROKU' in os.environ:
 @app.route('/')
 def index():
     return send_from_directory('client/build', 'index.html')

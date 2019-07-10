@@ -1,0 +1,10 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "iexcloud_api_wrapper": "^1.1.5",
+    "ml-random-forest": "^2.0.0"
+  }
+}

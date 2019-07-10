@@ -3105,7 +3105,7 @@ let WEEK_DATA = [
 ];
 
 WEEK_DATA = WEEK_DATA.reverse();
-const PERIOD_TO_PREDICT = 3;  // N days to predict
+const PERIOD_TO_PREDICT = 1;  // N days to predict
 
 const FinanceCharts = () => {
   const [stocksCurrencyData, setStocksCurrencyData] = useState({});
